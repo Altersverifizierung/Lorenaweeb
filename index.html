@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>ChatsexVirtual</title>
+ <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+ <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+    .smoke-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: #03030c; overflow: hidden; }
+    .smoke { position: absolute; width: 100%; height: 100%; background: radial-gradient(circle, rgba(157, 0, 255, 0.15) 0%, rgba(3, 3, 12, 0) 70%); animation: smoke-move 15s infinite alternate ease-in-out; filter: blur(50px); }
+    @keyframes smoke-move { 0% { transform: scale(1) translate(-10%, -10%); } 100% { transform: scale(1.5) translate(10%, 10%); } }
+
+    @keyframes pulse-emoji { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+    .emoji { display: inline-block; animation: pulse-emoji 1s infinite ease-in-out; }
+
+    @keyframes pulse-photo {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.04); }
+    }
+
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; user-select: none; overflow-x: hidden; color: white; }
+
+    .main-title {
+        font-family: 'Great Vibes', cursive;
+        font-size: clamp(2.5rem, 10vw, 5rem);
+        background: linear-gradient(135deg, #00d2ff, #9d00ff, #ff007f);
+        -webkit-background-clip: text;
+        color: transparent;
+        margin: 20px 0;
+        text-align: center;
+        width: 100%;
+        line-height: 1.6;
+        word-break: break-word;
+        padding: 0 10px;
+    }
+
+    .carousel-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        perspective: 2000px;
+        touch-action: none;
+        margin-top: 50px;
+    }
+
+    .carousel { position: absolute; width: 280px; height: 500px; transform-style: preserve-3d; transition: transform 0.5s; cursor: grab; }
+
+    .card-wrapper {
+        position: absolute; left: 50%; margin-left: -140px; width: 280px; display: flex; flex-direction: column; align-items: center; gap: 15px;
+        transform: rotateY(calc((var(--item) - 1) * 120deg)) translateZ(450px);
+        opacity: 0.3; transition: 0.6s; pointer-events: none;
+    }
+    .card-wrapper.active { opacity: 1; pointer-events: auto; }
+
+    .card {
+        width: 280px; height: 400px; position: relative; transform-style: preserve-3d; cursor: pointer;
+        border-radius: 16px; animation: soft-glow 3s infinite alternate;
+        overflow: hidden;
+    }
+
+    @keyframes soft-glow {
+        from { box-shadow: 0 0 5px rgba(255, 0, 127, 0.3), 0 0 10px rgba(157, 0, 255, 0.2); }
+        to { box-shadow: 0 0 15px rgba(255, 0, 127, 0.5), 0 0 25px rgba(157, 0, 255, 0.4); }
+    }
+
+    .card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
+    .card-inner.flipped { transform: rotateY(180deg); }
+
+    .face { position: absolute; width: 100%; height: 100%; border-radius: 16px; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    .front { background: #111; }
+    .front img {
+        position: absolute; width: 100%; height: 100%; object-fit: cover; z-index: 1;
+        animation: pulse-photo 3s infinite alternate ease-in-out;
+    }
+    .front::after { content: ""; position: absolute; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2; }
+
+    .tag { font-size: 1.5rem; font-weight: bold; color: #ff007f; text-shadow: 0 0 10px #000; z-index: 3; text-align: center; }
+    .hint { color: #fff; z-index: 3; margin-top: 10px; font-size: 0.9rem; }
+
+    .back { background: #1a0a20; transform: rotateY(180deg); }
+    .back video { width: 100%; height: 100%; object-fit: cover; }
+
+    .action-btn { width: 100%; padding: 15px; background: linear-gradient(90deg, #ff007f, #9d00ff); border: none; border-radius: 10px; color: white; font-weight: bold; font-size: 1.2rem; cursor: pointer; display: none; margin-top: 10px; }
+
+    .nav-btn {
+        position: absolute; top: 40%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;
+        background: rgba(3, 3, 12, 0.6); border: 2px solid #9d00ff; color: #9d00ff; font-size: 1.5rem; border-radius: 50%;
+        cursor: pointer; z-index: 100; transition: all 0.3s ease; box-shadow: 0 0 10px rgba(157, 0, 255, 0.5);
+    }
+
+    .nav-btn:hover { background: #9d00ff; color: white; box-shadow: 0 0 20px #9d00ff; }
+    .nav-btn.prev { left: 5px; }
+    .nav-btn.next { right: 5px; }
+
+    .info-text { text-align: center; margin: 65px 10px; font-size: 1.1rem; max-width: 600px; z-index: 10; color: #FCEDFF;}
+    .footer { margin-top: 30px; padding: 20px; color: #FCEDFF; font-size: 0.9rem; border-top: 1px solid #333; text-align: center; }
+
+    @media (max-width: 600px) {
+        .carousel { width: 220px; }
+        .card-wrapper { margin-left: -110px; width: 220px; transform: rotateY(calc((var(--item) - 1) * 120deg)) translateZ(200px); }
+        .card { width: 220px; }
+        .nav-btn { width: 40px; height: 40px; font-size: 1.2rem; }
+    }
+ </style>
+</head>
+<body>
+
+ <div class="smoke-container"><div class="smoke"></div></div>
+
+ <h1 class="main-title">ChatsexVirtual</h1>
+
+ <div class="carousel-container">
+  <button class="nav-btn prev" onclick="rotateCarousel('prev')">❮</button>
+  <button class="nav-btn next" onclick="rotateCarousel('next')">❯</button>
+
+  <div class="carousel" id="carousel">
+   <div class="card-wrapper active" style="--item: 1;">
+    <div class="card" onclick="flipCard(this)">
+     <div class="card-inner">
+      <div class="face front"><img src="https://s62.erome.com/3284/FOX0hnxe/VS8relVM.jpeg"><span class="tag">MIKA<span class="emoji">💘</span></span><span class="hint">Haz clic para ver</span></div>
+      <div class="face back"><video autoplay loop muted playsinline><source src="1779893569278.mp4" type="video/mp4"></video></div>
+     </div>
+    </div>
+    <button class="action-btn" onclick="window.location.href='https://clicknlook.site/a/wpRWzCyOp7I1z5W'">CHAT SEX 🔥</button>
+   </div>
+
+   <div class="card-wrapper" style="--item: 2;">
+    <div class="card" onclick="flipCard(this)">
+     <div class="card-inner">
+      <div class="face front"><img src="https://s11.erome.com/8272/RcXQF4S2/Tz413y2u.jpg"><span class="tag">LORENA<span class="emoji">💘</span></span><span class="hint">Haz clic para ver</span></div>
+      <div class="face back"><video autoplay loop muted playsinline><source src="1779601542736.mp4" type="video/mp4"></video></div>
+     </div>
+    </div>
+    <button class="action-btn" onclick="window.location.href='https://clicknlook.site/a/wpRWzCyOp7I1z5W'">CHAT SEX 🔥</button>
+   </div>
+
+   <div class="card-wrapper" style="--item: 3;">
+    <div class="card" onclick="flipCard(this)">
+     <div class="card-inner">
+      <div class="face front"><img src="https://s11.erome.com/8272/RcXQF4S2/EO4w7LNU.jpg"><span class="tag">FLOR<span class="emoji">💘</span></span><span class="hint">Haz clic para ver</span></div>
+      <div class="face back"><video autoplay loop muted playsinline><source src="1741442957834.mp4" type="video/mp4"></video></div>
+     </div>
+    </div>
+    <button class="action-btn" onclick="window.location.href='https://clicknlook.site/a/wpRWzCyOp7I1z5W'">CHAT SEX 🔥</button>
+   </div>
+  </div>
+ </div>
+
+ <div class="info-text">
+    Conecta en vivo con las chicas más calientes cerca de ti. ¡Haz clic ahora y comienza tu aventura de fantasía al instante!
+ </div>
+
+ <footer class="footer">
+    <p>Todos los derechos reservados © 2026</p>
+ </footer>
+
+ <script>
+  function flipCard(card) {
+      const inner = card.querySelector('.card-inner');
+      const btn = card.parentElement.querySelector('.action-btn');
+      if (inner.classList.contains('flipped')) { inner.classList.remove('flipped'); btn.style.display = 'none'; }
+      else { inner.classList.add('flipped'); btn.style.display = 'block'; }
+  }
+
+  const carousel = document.getElementById('carousel');
+  const wrappers = document.querySelectorAll('.card-wrapper');
+  let currentRotation = 0;
+
+  function rotateCarousel(direction) {
+      currentRotation += (direction === 'next' ? -120 : 120);
+      carousel.style.transform = `rotateY(${currentRotation}deg)`;
+      updateActive();
+  }
+
+  function updateActive() {
+      let activeIndex = (Math.round((currentRotation % 360) / 120) * -1) % 3;
+      if (activeIndex < 0) activeIndex += 3;
+      wrappers.forEach((w, i) => {
+          w.classList.toggle('active', i === activeIndex);
+          w.querySelector('.card-inner').classList.remove('flipped');
+          w.querySelector('.action-btn').style.display = 'none';
+      });
+  }
+
+  let isDragging = false, startX = 0;
+  carousel.addEventListener('mousedown', (e) => { isDragging = true; startX = e.pageX; });
+  window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      currentRotation += (e.pageX - startX) * 0.5;
+      carousel.style.transform = `rotateY(${currentRotation}deg)`;
+      startX = e.pageX;
+  });
+  window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      currentRotation = Math.round(currentRotation / 120) * 120;
+      carousel.style.transform = `rotateY(${currentRotation}deg)`;
+      updateActive();
+  });
+ </script>
+</body>
+</html>
